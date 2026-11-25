@@ -22,6 +22,7 @@ docker compose config --quiet
 1. 在左侧选阶段，查看采信、整理、计算、判定和对账结果。
 2. 选择 `dirty` 样例观察坏行和隔离原因。
 3. 换 `clean` 样例执行批次，填写复核意见后签发。
-4. 下载证据 JSON，核对来源摘要、指标和签发版本。
+4. 选择 `pump-clean` 查看两栋共用泵电的跨楼分摊与联合对账（可签发）；`pump-gap` 演示宿主楼对不平导致两栋泵电账整体挂起。
+5. 下载证据 JSON，核对来源摘要、指标、泵表/各楼总表电量和签发版本。
 
-业务规则见 `docs/BUSINESS-RULES.md`，字段定义见 `docs/DATA-DICTIONARY.md`。
+业务规则见 `docs/BUSINESS-RULES.md`，字段定义见 `docs/DATA-DICTIONARY.md`，泵表接线格式见数据字典的「泵表接线记录」。

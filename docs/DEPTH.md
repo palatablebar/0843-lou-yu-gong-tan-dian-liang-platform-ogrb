@@ -15,6 +15,7 @@
 | M5 运行对账 | 核对来源行、采信、隔离、重复与计算条目 | `POST /api/stages/reconcile` | `app/reconcile/ledger.py` | `tests/test_reconcile.py` |
 | M6 批次复核 | 带版本号签发或暂缓，拒绝陈旧复核 | `POST /api/runs/{id}/review` | `app/review/service.py` | `tests/test_review.py` |
 | M7 证据交付 | 仅在签发后输出可校验的复核证据 | `GET /api/runs/{id}/evidence` | `app/evidence/render.py` | `tests/test_evidence.py` |
+| M8 泵电共担 | 接线加载、泵电跨楼分摊与两栋联合对账 | 随 M3-M5 流水线 | `app/domain/pump.py`、`app/domain/pump_settle.py` | `tests/test_pump.py` |
 
 ## 输入陷阱
 
@@ -35,3 +36,5 @@
 ## 深度边界
 
 采信层区分编码、重复表头、列数、空值、全角字符、前导零与冲突重复；整理层负责单位和字段边界；计算层执行核心规则；判定层保留原因码；对账层要求来源行等于采信、隔离、重复和忽略之和；复核层使用版本号阻止陈旧签发。
+
+泵电层独立于读数采信：接线记录缺失时退回无泵流程；宿主楼公摊先扣整只泵表防止重复计费，泵电仅按受益房间面积跨楼分摊并守恒到 Wh；两栋联合结算，任一楼对账失败即整体阻断；接线摘要进入 `run_key` 保证同读数同接线幂等；证据段同时留存泵表与各楼总表电量。

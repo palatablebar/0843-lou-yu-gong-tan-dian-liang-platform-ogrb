@@ -11,7 +11,7 @@ from app.intake.reader import read_records
 def _path(profile: str, path: str | None):
     if path:
         return Path(path)
-    if profile not in {"clean", "dirty"}:
+    if profile not in {"clean", "dirty", "pump-clean", "pump-gap"}:
         raise DomainIssue("SAMPLE_UNKNOWN")
     return SAMPLES / f"{profile}.csv"
 

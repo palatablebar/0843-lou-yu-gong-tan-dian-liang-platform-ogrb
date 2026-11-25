@@ -2,10 +2,13 @@ from flask import Blueprint, abort, jsonify, request, send_file
 
 from app.catalog import SPEC
 from app.config import SAMPLES
+from app.domain.pump import WIRING_SUFFIX
 from app.errors import DomainIssue
 from app.evidence.render import render
 from app.review.service import approve, create_run, serialize
 from app.service import pipeline
+
+SAMPLE_PROFILES = ("dirty", "clean", "pump-clean", "pump-gap")
 
 
 api = Blueprint("api", __name__)
@@ -25,7 +28,7 @@ def catalog():
                        ["intake", "prepare", "calculate", "decision", "reconcile", "review", "evidence"],
                        SPEC["stages"])],
                    chart=SPEC["chart"], result_columns=SPEC["result_columns"],
-                   columns=SPEC["columns"], samples=["dirty", "clean"])
+                   columns=SPEC["columns"], samples=list(SAMPLE_PROFILES))
 
 
 @api.post("/api/stages/<stage_id>")
@@ -70,6 +73,16 @@ def evidence(run_id):
 
 @api.get("/api/examples/<profile>")
 def example(profile):
-    if profile not in {"clean", "dirty"}:
+    if profile not in SAMPLE_PROFILES:
         abort(404)
     return send_file(SAMPLES / f"{profile}.csv", as_attachment=True)
+
+
+@api.get("/api/examples/<profile>/wiring")
+def example_wiring(profile):
+    if profile not in SAMPLE_PROFILES:
+        abort(404)
+    wiring = SAMPLES / f"{profile}{WIRING_SUFFIX}"
+    if not wiring.is_file():
+        raise DomainIssue("WIRING_NOT_FOUND", 404)
+    return send_file(wiring, as_attachment=True)

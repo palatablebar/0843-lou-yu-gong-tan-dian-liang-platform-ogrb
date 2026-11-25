@@ -1,4 +1,3 @@
-import json
 from decimal import Decimal
 from pathlib import Path
 
@@ -6,6 +5,8 @@ from app.catalog import SPEC
 from app.domain.calculate import calculate_rows
 from app.domain.decision import decide_rows
 from app.domain.prepare import prepare_rows
+from app.domain.pump import load_wiring
+from app.domain.pump_settle import settle_pump
 from app.intake.service import load
 from app.reconcile.ledger import build_ledger
 
@@ -31,17 +32,22 @@ def pipeline(profile="dirty", path=None, upto="证据交付"):
     prepared, prepare_issues = [], []
     results = []
     ledger = None
+    pump_config = None
+    pump_issues = []
+    settlement = None
     if _stage(upto) >= 2:
         prepared, prepare_issues = prepare_rows(intake["rows"])
+        pump_config, pump_issues = load_wiring(profile, prepared, path)
     if _stage(upto) >= 3:
         results = calculate_rows(prepared)
+        settlement = settle_pump(prepared, pump_config)
     if _stage(upto) >= 4:
-        results = decide_rows(results)
+        results = decide_rows(results, settlement)
     if _stage(upto) >= 5:
-        ledger = build_ledger(intake, prepared, prepare_issues, results)
+        ledger = build_ledger(intake, prepared, prepare_issues, results, settlement)
     intake["counts"]["prepared"] = len(prepared)
     intake["counts"]["computed"] = len(results)
-    issues = intake["issues"] + prepare_issues
+    issues = intake["issues"] + prepare_issues + pump_issues
     summary = {"PASS": 0, "REVIEW": 0, "REJECT": 0}
     for item in results:
         summary[item.get("verdict", "REVIEW")] = summary.get(item.get("verdict", "REVIEW"), 0) + 1
@@ -61,6 +67,10 @@ def pipeline(profile="dirty", path=None, upto="证据交付"):
                          if key in {"label", "verdict", "reason", "metric", "limit", "status", "state", "breakdown"}
                          or key in SPEC["columns"] or key in SPEC["result_columns"]})
     source = {"profile": profile, "filename": Path(intake["path"]).name, "sha256": intake["sha256"]}
+    if pump_config is not None:
+        source["wiring_filename"] = pump_config["wiring_filename"]
+        source["wiring_sha256"] = pump_config["wiring_sha256"]
+    wiring_digest = pump_config["wiring_sha256"] if pump_config is not None else "no-pump"
     payload = {
         "project": SPEC["code"] + " " + SPEC["name"],
         "rule": SPEC["rule_short"],
@@ -73,12 +83,13 @@ def pipeline(profile="dirty", path=None, upto="证据交付"):
         "chart": chart,
         "summary": summary,
         "ledger": ledger,
+        "pump_settlement": settlement,
         "stages": [{"id": "intake", "name": SPEC["stages"][0]},
                    {"id": "prepare", "name": SPEC["stages"][1]},
                    {"id": "calculate", "name": SPEC["stages"][2]},
                    {"id": "decision", "name": SPEC["stages"][3]},
                    {"id": "reconcile", "name": SPEC["stages"][4]}],
         "run_key": __import__("hashlib").sha256(
-            (SPEC["code"] + profile + intake["sha256"] + SPEC["rule"]).encode("utf-8")).hexdigest()[:24],
+            (SPEC["code"] + profile + intake["sha256"] + wiring_digest + SPEC["rule"]).encode("utf-8")).hexdigest()[:24],
     }
     return jsonable(payload)

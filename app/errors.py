@@ -18,6 +18,16 @@ MESSAGES = {
     "GATE_BLOCKED": "存在阻断项，不能签发",
     "NOT_APPROVED": "批次尚未签发",
     "BAD_REQUEST": "请求内容不完整",
+    "WIRING_NOT_FOUND": "该样例没有泵表接线记录",
+    "WIRING_BAD_JSON": "接线记录不是合法 JSON",
+    "WIRING_BAD_SHAPE": "接线记录结构不正确",
+    "WIRING_FIELD_MISSING": "接线记录缺少必填字段",
+    "WIRING_PUMP_ID": "泵表标识为空",
+    "WIRING_BAD_READING": "泵表读数无法解析",
+    "WIRING_BACKWARDS": "泵表止码小于起码",
+    "WIRING_BENEFICIARY_EMPTY": "受益房间清单为空",
+    "PUMP_HOST_UNKNOWN": "接线记录的宿主楼不存在",
+    "PUMP_BENEFICIARY_UNKNOWN": "受益房间在读数数据中不存在",
 }
 
 

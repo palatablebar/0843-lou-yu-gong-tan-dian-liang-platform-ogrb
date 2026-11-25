@@ -1,0 +1,7 @@
+{
+  "pump_meter_id": "P1",
+  "pump_start": "0",
+  "pump_end": "60",
+  "host_building_id": "B1",
+  "beneficiary_rooms": ["R1", "R2", "R3", "R4", "R5"]
+}
